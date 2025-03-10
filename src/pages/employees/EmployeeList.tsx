@@ -10,17 +10,15 @@ import {
   Building2,
   Calendar,
   Loader2,
-  Search,
+  CircleDot,
 } from "lucide-react";
-import { fetchEmployees, deleteEmployee } from "@/lib/supabase";
+import { fetchEmployees } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { Employee } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 
 const EmployeeList = () => {
@@ -28,8 +26,6 @@ const EmployeeList = () => {
   const { toast } = useToast();
   const [employeeList, setEmployeeList] = useState<Employee[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     const loadEmployees = async () => {
@@ -115,32 +111,37 @@ const EmployeeList = () => {
         }
       },
     },
+    {
+      header: () => (
+        <div className="flex items-center gap-2">
+          <CircleDot className="h-4 w-4 text-blue-600" />
+          <span className="font-medium text-gray-700">Status</span>
+        </div>
+      ),
+      accessorKey: "status",
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Badge
+            variant={row.original.status === "active" ? "default" : "secondary"}
+            className={
+              row.original.status === "active"
+                ? "bg-green-100 text-green-700 hover:bg-green-100"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-100"
+            }
+          >
+            <CircleDot
+              className={`h-3 w-3 mr-1 ${
+                row.original.status === "active"
+                  ? "text-green-500"
+                  : "text-gray-500"
+              }`}
+            />
+            {row.original.status === "active" ? "Active" : "Inactive"}
+          </Badge>
+        </div>
+      ),
+    },
   ];
-
-  const handleDelete = (id: string) => {
-    setEmployeeToDelete(id);
-    setShowDeleteDialog(true);
-  };
-
-  const confirmDelete = async () => {
-    if (!employeeToDelete) return;
-
-    const result = await deleteEmployee(employeeToDelete);
-    if (result) {
-      toast({
-        title: "Employee deleted",
-        description: "The employee has been successfully deleted.",
-      });
-    } else {
-      toast({
-        title: "Cannot delete employee",
-        description: "Failed to delete the employee. Please try again.",
-        variant: "destructive",
-      });
-    }
-    setShowDeleteDialog(false);
-    setEmployeeToDelete(null);
-  };
 
   return (
     <Layout
@@ -152,7 +153,7 @@ const EmployeeList = () => {
           <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
             <div className="flex justify-between items-center">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
+                <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                   <Users2 className="h-7 w-7 text-blue-600" />
                   Employee List
                 </h2>
@@ -200,27 +201,14 @@ const EmployeeList = () => {
                 data={employeeList}
                 columns={columns}
                 getRowId={(row) => row.id}
-                onDelete={handleDelete}
                 searchable
                 searchKeys={["name", "position", "department"]}
                 basePath="/employees"
+                onDelete={undefined}
               />
             )}
           </div>
         </Card>
-
-        <ConfirmationDialog
-          isOpen={showDeleteDialog}
-          onClose={() => {
-            setShowDeleteDialog(false);
-            setEmployeeToDelete(null);
-          }}
-          onConfirm={confirmDelete}
-          title="Delete Employee"
-          description="Are you sure you want to delete this employee? This action cannot be undone."
-          confirmText="Delete"
-          variant="destructive"
-        />
       </div>
     </Layout>
   );

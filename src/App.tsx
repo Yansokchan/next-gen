@@ -24,7 +24,9 @@ import EmployeeEdit from "./pages/employees/EmployeeEdit";
 // Product pages
 import ProductList from "./pages/products/ProductList";
 import ProductForm from "./pages/products/ProductForm";
+import EditProduct from "./pages/products/EditProduct";
 import ProductView from "./pages/products/ProductView";
+import ProductNew from "./pages/products/ProductNew";
 
 // Order pages
 import OrderList from "./pages/orders/OrderList";

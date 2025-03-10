@@ -18,6 +18,7 @@ export type Employee = {
   department: string;
   salary: number;
   hireDate: Date;
+  status: "active" | "inactive"; // Add status field
   salesCount?: number; // Added for UI display
   salesAmount?: number; // Added for UI display
 };

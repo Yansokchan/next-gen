@@ -296,7 +296,7 @@ function ProductList() {
           <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50">
             <div className="flex justify-between items-center">
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900">
+                <h2 className="text-2xl font-bold flex items-center gap-2 text-gray-900 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                   <Package className="h-7 w-7 text-blue-600" />
                   Product List
                 </h2>

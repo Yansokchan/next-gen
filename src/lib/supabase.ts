@@ -65,7 +65,9 @@ export const fetchCustomers = async (): Promise<Customer[]> => {
     return data.map((customer) => ({
       ...customer,
       id: ensureUUID(customer.id),
-      createdAt: customer.createdAt ? new Date(customer.createdAt) : new Date(),
+      createdAt: customer.created_at
+        ? new Date(new Date(customer.created_at).toUTCString())
+        : new Date(),
     })) as Customer[];
   } catch (err) {
     console.error("Error in fetchCustomers:", err);
@@ -134,7 +136,9 @@ export const fetchCustomerById = async (
       email: data.email,
       phone: data.phone,
       address: data.address,
-      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+      createdAt: data.created_at
+        ? new Date(new Date(data.created_at).toUTCString())
+        : new Date(),
     } as Customer;
   } catch (err) {
     console.error("Error in fetchCustomerById:", err);
@@ -152,6 +156,18 @@ export const createCustomer = async (
 
   try {
     const newId = uuidv4();
+    const now = new Date();
+    const utcDate = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds()
+      )
+    );
+
     const { data, error } = await supabase
       .from("customers")
       .insert([
@@ -161,7 +177,7 @@ export const createCustomer = async (
           email: customer.email,
           phone: customer.phone,
           address: customer.address,
-          created_at: new Date().toISOString(),
+          created_at: utcDate.toISOString(),
         },
       ])
       .select()
@@ -175,7 +191,9 @@ export const createCustomer = async (
     return {
       ...data,
       id: newId,
-      createdAt: data.created_at ? new Date(data.created_at) : new Date(),
+      createdAt: data.created_at
+        ? new Date(new Date(data.created_at).toUTCString())
+        : utcDate,
     } as Customer;
   } catch (err) {
     console.error("Error in createCustomer:", err);
@@ -262,14 +280,8 @@ export const fetchEmployees = async (): Promise<Employee[]> => {
     return data.map((employee) => ({
       ...employee,
       id: ensureUUID(employee.id),
-      hireDate: employee.hireDate
-        ? new Date(
-            Date.UTC(
-              new Date(employee.hireDate).getUTCFullYear(),
-              new Date(employee.hireDate).getUTCMonth(),
-              new Date(employee.hireDate).getUTCDate()
-            )
-          )
+      hireDate: employee.hire_date
+        ? new Date(new Date(employee.hire_date).toUTCString())
         : new Date(),
     })) as Employee[];
   } catch (err) {
@@ -307,14 +319,8 @@ export const fetchEmployeeById = async (
     return {
       ...data,
       id: uuid,
-      hireDate: data.hireDate
-        ? new Date(
-            Date.UTC(
-              new Date(data.hireDate).getUTCFullYear(),
-              new Date(data.hireDate).getUTCMonth(),
-              new Date(data.hireDate).getUTCDate()
-            )
-          )
+      hireDate: data.hire_date
+        ? new Date(new Date(data.hire_date).toUTCString())
         : new Date(),
     } as Employee;
   } catch (err) {
@@ -333,6 +339,18 @@ export const createEmployee = async (
 
   try {
     const newId = uuidv4();
+    const now = new Date();
+    const utcDate = new Date(
+      Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        now.getUTCHours(),
+        now.getUTCMinutes(),
+        now.getUTCSeconds()
+      )
+    );
+
     const { data, error } = await supabase
       .from("employees")
       .insert([
@@ -345,13 +363,7 @@ export const createEmployee = async (
           position: employee.position,
           department: employee.department,
           salary: employee.salary,
-          hire_date: new Date(
-            Date.UTC(
-              new Date().getUTCFullYear(),
-              new Date().getUTCMonth(),
-              new Date().getUTCDate()
-            )
-          ).toISOString(),
+          hire_date: utcDate.toISOString(),
         },
       ])
       .select()
@@ -366,14 +378,8 @@ export const createEmployee = async (
       ...data,
       id: newId,
       hireDate: data.hire_date
-        ? new Date(
-            Date.UTC(
-              new Date(data.hire_date).getUTCFullYear(),
-              new Date(data.hire_date).getUTCMonth(),
-              new Date(data.hire_date).getUTCDate()
-            )
-          )
-        : new Date(),
+        ? new Date(new Date(data.hire_date).toUTCString())
+        : utcDate,
     } as Employee;
   } catch (err) {
     console.error("Error in createEmployee:", err);
@@ -398,7 +404,14 @@ export const updateEmployee = async (
     if (employee.hireDate) {
       const date = new Date(employee.hireDate);
       updateData.hire_date = new Date(
-        Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+        Date.UTC(
+          date.getUTCFullYear(),
+          date.getUTCMonth(),
+          date.getUTCDate(),
+          date.getUTCHours(),
+          date.getUTCMinutes(),
+          date.getUTCSeconds()
+        )
       ).toISOString();
       delete updateData.hireDate; // Remove the camelCase version
     }
@@ -419,13 +432,7 @@ export const updateEmployee = async (
       ...data,
       id: uuid,
       hireDate: data.hire_date
-        ? new Date(
-            Date.UTC(
-              new Date(data.hire_date).getUTCFullYear(),
-              new Date(data.hire_date).getUTCMonth(),
-              new Date(data.hire_date).getUTCDate()
-            )
-          )
+        ? new Date(new Date(data.hire_date).toUTCString())
         : new Date(),
     } as Employee;
   } catch (err) {

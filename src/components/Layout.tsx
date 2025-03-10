@@ -50,7 +50,7 @@ export default function Layout({
               <div className="flex justify-between items-start">
                 <div>
                   {title && (
-                    <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+                    <h1 className="text-3xl font-semibold tracking-tight text-foreground bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
                       {title}
                     </h1>
                   )}

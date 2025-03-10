@@ -1,58 +1,58 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  darkMode: ["class"],
-  content: [
-    "./pages/**/*.{ts,tsx}",
-    "./components/**/*.{ts,tsx}",
-    "./app/**/*.{ts,tsx}",
-    "./src/**/*.{ts,tsx}",
-  ],
-  prefix: "",
-  theme: {
-    container: {
-      center: true,
+	darkMode: ["class"],
+	content: [
+		"./pages/**/*.{ts,tsx}",
+		"./components/**/*.{ts,tsx}",
+		"./app/**/*.{ts,tsx}",
+		"./src/**/*.{ts,tsx}",
+	],
+	prefix: "",
+	theme: {
+		container: {
+			center: true,
       padding: "2rem",
-      screens: {
+			screens: {
         "2xl": "1400px",
       },
-    },
-    extend: {
-      colors: {
+		},
+		extend: {
+			colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
+				primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
+				},
+				secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
+				},
+				destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
+				},
+				muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
+				},
+				accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
+				},
+				popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
+				},
+				card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
-        },
-        sidebar: {
+				},
+				sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
           primary: "hsl(var(--sidebar-primary))",
@@ -62,13 +62,13 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
-      },
-      borderRadius: {
+			},
+			borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
-      },
-      keyframes: {
+			},
+			keyframes: {
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -157,8 +157,8 @@ export default {
         "spin-reverse": {
           to: { transform: "rotate(-360deg)" },
         },
-      },
-      animation: {
+			},
+			animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
@@ -178,8 +178,8 @@ export default {
         shimmer: "shimmer 2s linear infinite",
         spin: "spin 1s linear infinite",
         "spin-reverse": "spin-reverse 1s linear infinite",
-      },
-      transitionTimingFunction: {
+			},
+			transitionTimingFunction: {
         spring: "cubic-bezier(0.4, 0, 0.2, 1)",
       },
       animationDelay: {

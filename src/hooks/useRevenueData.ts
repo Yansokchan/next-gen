@@ -20,42 +20,68 @@ export function useRevenueData() {
     queryFn: async () => {
       const orders = await fetchOrders();
 
-      // Set reference date to March 9, 2025
-      const referenceDate = new Date(2025, 2, 9); // Month is 0-based
+      // Get current date in user's timezone
+      const now = new Date();
 
-      // Today: March 9, 2025
-      const startOfDay = new Date(2025, 2, 9);
+      // Today
+      const startOfDay = new Date(now);
       startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(2025, 2, 9, 23, 59, 59, 999);
+      const endOfDay = new Date(now);
+      endOfDay.setHours(23, 59, 59, 999);
 
-      // This Week: March 3-9, 2025 (Monday to Sunday)
-      const startOfWeek = new Date(2025, 2, 3); // Starting from Monday
+      // This Week (Monday to current day)
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(
+        now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)
+      ); // Start from Monday
       startOfWeek.setHours(0, 0, 0, 0);
 
-      // This Month: March 1-9, 2025
-      const startOfMonth = new Date(2025, 2, 1);
+      // This Month (1st to current day)
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
       startOfMonth.setHours(0, 0, 0, 0);
 
       const timeFrames: TimeFrameData = {
         today: {
           revenue: 0,
           orderCount: 0,
-          dateRange: "March 9, 2025",
+          dateRange: new Date().toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          }),
         },
         thisWeek: {
           revenue: 0,
           orderCount: 0,
-          dateRange: "Mar 3 - Mar 9, 2025",
+          dateRange: `${startOfWeek.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })} - ${now.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}`,
         },
         thisMonth: {
           revenue: 0,
           orderCount: 0,
-          dateRange: "Mar 1 - Mar 9, 2025",
+          dateRange: `${startOfMonth.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+          })} - ${now.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}`,
         },
         older: {
           revenue: 0,
           orderCount: 0,
-          dateRange: "Before Mar 1, 2025",
+          dateRange: `Before ${startOfMonth.toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          })}`,
         },
       };
 
@@ -64,7 +90,7 @@ export function useRevenueData() {
         const total = order.total;
 
         if (orderDate >= startOfDay && orderDate <= endOfDay) {
-          // Today (March 9, 2025)
+          // Today
           timeFrames.today.revenue += total;
           timeFrames.today.orderCount++;
           timeFrames.thisWeek.revenue += total;
@@ -72,17 +98,17 @@ export function useRevenueData() {
           timeFrames.thisMonth.revenue += total;
           timeFrames.thisMonth.orderCount++;
         } else if (orderDate >= startOfWeek && orderDate < startOfDay) {
-          // This Week (March 3-8, 2025)
+          // This Week (up to yesterday)
           timeFrames.thisWeek.revenue += total;
           timeFrames.thisWeek.orderCount++;
           timeFrames.thisMonth.revenue += total;
           timeFrames.thisMonth.orderCount++;
         } else if (orderDate >= startOfMonth && orderDate < startOfWeek) {
-          // This Month (March 1-2, 2025)
+          // This Month (up to last week)
           timeFrames.thisMonth.revenue += total;
           timeFrames.thisMonth.orderCount++;
         } else if (orderDate < startOfMonth) {
-          // Older (Before March 1, 2025)
+          // Older
           timeFrames.older.revenue += total;
           timeFrames.older.orderCount++;
         }

@@ -11,6 +11,13 @@ import Layout from "@/components/Layout";
 import { Card } from "@/components/ui/card";
 import { format, parseISO, startOfDay } from "date-fns";
 import { Employee } from "@/lib/types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface FormData {
   name: string;
@@ -18,6 +25,7 @@ interface FormData {
   position: string;
   department: string;
   hireDate: string;
+  status: "active" | "inactive";
 }
 
 export default function EditEmployee() {
@@ -29,6 +37,7 @@ export default function EditEmployee() {
     position: "",
     department: "",
     hireDate: "",
+    status: "active",
   });
 
   // Fetch employee data
@@ -50,6 +59,7 @@ export default function EditEmployee() {
         position: employee.position,
         department: employee.department,
         hireDate: hireDateFormatted,
+        status: employee.status,
       });
     }
   }, [employee]);
@@ -164,6 +174,24 @@ export default function EditEmployee() {
                 setFormData({ ...formData, hireDate: e.target.value })
               }
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value: "active" | "inactive") =>
+                setFormData({ ...formData, status: value })
+              }
+            >
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end gap-4">

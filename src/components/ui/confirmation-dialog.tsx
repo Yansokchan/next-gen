@@ -49,7 +49,7 @@ export function ConfirmationDialog({
             className={
               variant === "destructive"
                 ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                : ""
+                : "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
             }
           >
             {confirmText}
@@ -58,4 +58,4 @@ export function ConfirmationDialog({
       </AlertDialogContent>
     </AlertDialog>
   );
-} 
+}

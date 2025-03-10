@@ -13,7 +13,6 @@ import {
 import { format } from "date-fns";
 import {
   Edit,
-  Trash,
   ArrowLeft,
   ShoppingCart,
   User,
@@ -25,11 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import {
-  fetchCustomerById,
-  getCustomerPurchaseCount,
-  deleteCustomer,
-} from "@/lib/supabase";
+import { fetchCustomerById, getCustomerPurchaseCount } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCustomerById } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
@@ -110,24 +105,6 @@ const CustomerView = () => {
     );
   }
 
-  const handleDelete = async () => {
-    const success = await deleteCustomer(id || "");
-
-    if (success) {
-      toast({
-        title: "Customer deleted",
-        description: "The customer has been successfully deleted.",
-      });
-      navigate("/customers");
-    } else {
-      toast({
-        title: "Error",
-        description: "Failed to delete the customer. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <Layout
       title="Customer Details"
@@ -152,14 +129,6 @@ const CustomerView = () => {
             >
               <Edit className="h-5 w-5 text-blue-600" />
               <span className="text-blue-600">Edit</span>
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              className="gap-2 text-base bg-red-500 hover:bg-red-600"
-            >
-              <Trash className="h-5 w-5" />
-              Delete
             </Button>
           </div>
         </div>

@@ -402,7 +402,7 @@ export default function ProductView() {
         </Card>
 
         <Card className="shadow-lg border-0 ring-1 ring-gray-200">
-          <CardHeader className="pb-6">
+          <CardHeader className="pb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
             <div className="flex items-center gap-3">
               <div className="p-3 bg-blue-50 rounded-xl">
                 <Box className="h-6 w-6 text-blue-600" />

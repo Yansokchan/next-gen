@@ -376,7 +376,7 @@ const Index = () => {
           <div className="p-6">
             <Table>
               <TableHeader>
-                <TableRow className="hover:bg-transparent border-0">
+                <TableRow className="bg-gray-500/10">
                   <TableHead>
                     <div className="flex items-center gap-2">
                       <Hash className="h-4 w-4 text-blue-600" />

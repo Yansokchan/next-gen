@@ -56,7 +56,7 @@ export default function Sidebar({ onCollapseChange }: SidebarProps) {
       <div className="flex flex-col h-full">
         <header className="h-16 flex items-center justify-between px-4 border-b border-border">
           {!collapsed && (
-            <span className="text-3xl font-semibold text-foreground">
+            <span className="text-3xl font-semibold text-foreground bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
               Next-Gen
             </span>
           )}

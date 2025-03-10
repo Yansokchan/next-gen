@@ -1,7 +1,11 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -9,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 interface FormLayoutProps {
   children: React.ReactNode;
-  title?: string;
+  title?: React.ReactNode;
   description?: string;
   onSubmit?: (e: React.FormEvent) => void | Promise<void>;
   onCancel?: () => void;
@@ -35,10 +39,10 @@ export function FormLayout({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [internalSubmitting, setInternalSubmitting] = useState(false);
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (onSubmit) {
       setInternalSubmitting(true);
       try {
@@ -55,7 +59,7 @@ export function FormLayout({
       }
     }
   };
-  
+
   const handleCancel = () => {
     if (onCancel) {
       onCancel();
@@ -63,23 +67,28 @@ export function FormLayout({
       navigate(backPath);
     }
   };
-  
+
   const submitting = isSubmitting || internalSubmitting;
-  
+
   return (
-    <Card className={cn("w-full max-w-3xl mx-auto transition-all animate-scale-in glass-card", className)}>
+    <Card
+      className={cn(
+        "w-full max-w-3xl mx-auto transition-all animate-scale-in glass-card",
+        className
+      )}
+    >
       {(title || description) && (
         <CardHeader>
-          {title && <h2 className="text-2xl font-semibold">{title}</h2>}
-          {description && <p className="text-muted-foreground">{description}</p>}
+          {title && <div className="text-2xl font-semibold">{title}</div>}
+          {description && (
+            <p className="text-muted-foreground">{description}</p>
+          )}
         </CardHeader>
       )}
-      
+
       <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-6">
-          {children}
-        </CardContent>
-        
+        <CardContent className="space-y-6">{children}</CardContent>
+
         <CardFooter className="flex justify-end gap-3 pt-4 border-t">
           <Button
             type="button"
@@ -89,11 +98,11 @@ export function FormLayout({
           >
             {cancelText}
           </Button>
-          
+
           <Button
             type="submit"
             disabled={submitting}
-            className="min-w-[100px]"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 min-w-[150px]"
           >
             {submitting ? (
               <>

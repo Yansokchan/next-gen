@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,14 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "@/lib/types";
-import { Plus, Trash } from "lucide-react";
+import {
+  Plus,
+  Trash,
+  ShoppingCart,
+  User,
+  UserCircle,
+  Calculator,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   fetchCustomers,
@@ -22,11 +29,14 @@ import {
   fetchEmployees,
   createOrder,
 } from "@/lib/supabase";
+import { motion } from "framer-motion";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { Combobox } from "@/components/ui/combobox";
 
 const OrderNew = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [items, setItems] = useState<
@@ -65,10 +75,21 @@ const OrderNew = () => {
     queryFn: fetchEmployees,
   });
 
+  // Filter employees to only show Sales department
+  const salesEmployees = employees.filter(
+    (employee) => employee.department === "Sales"
+  );
+
   // Filter out products with no stock
   const availableProducts = products.filter(
     (product) => product.stock > 0 && product.status === "available"
   );
+
+  // Format customers for combobox
+  const customerOptions = customers.map((customer) => ({
+    value: customer.id,
+    label: customer.name,
+  }));
 
   const addItem = () => {
     setItems([
@@ -84,80 +105,52 @@ const OrderNew = () => {
   };
 
   const removeItem = (id: string) => {
-    if (items.length > 1) {
-      setItems(items.filter((item) => item.id !== id));
-    } else {
+    if (items.length === 1) {
       toast({
         title: "Cannot remove item",
-        description: "Orders must have at least one item",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const updateItemPrice = (id: string, productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      setItems(
-        items.map((item) =>
-          item.id === id
-            ? {
-                ...item,
-                productId,
-                productName: product.name,
-                price: product.price,
-                quantity: 1, // Reset quantity when product changes
-              }
-            : item
-        )
-      );
-    }
-  };
-
-  const updateItemQuantity = (id: string, quantity: number) => {
-    const item = items.find((i) => i.id === id);
-    const product = item ? products.find((p) => p.id === item.productId) : null;
-
-    if (!product) {
-      toast({
-        title: "Error",
-        description: "Please select a product first",
+        description: "Order must have at least one item",
         variant: "destructive",
       });
       return;
     }
+    setItems(items.filter((item) => item.id !== id));
+  };
 
-    if (quantity > product.stock) {
-      toast({
-        title: "Invalid quantity",
-        description: `Only ${product.stock} units available in stock`,
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const updateItem = (
+    id: string,
+    field: "productId" | "quantity",
+    value: string | number
+  ) => {
     setItems(
-      items.map((item) =>
-        item.id === id
-          ? {
+      items.map((item) => {
+        if (item.id === id) {
+          if (field === "productId") {
+            const product = products.find((p) => p.id === value);
+            return {
               ...item,
-              quantity: Math.max(1, Math.floor(quantity)),
-            }
-          : item
-      )
+              productId: value as string,
+              productName: product?.name || "",
+              price: product?.price || 0,
+            };
+          }
+          // Handle quantity field
+          if (field === "quantity") {
+            return {
+              ...item,
+              quantity: Math.max(1, Number(value)), // Ensure it's a number and at least 1
+            };
+          }
+        }
+        return item;
+      })
     );
   };
 
   const calculateTotal = () => {
-    return items.reduce((sum, item) => {
-      if (!item.productId) return sum;
-      return sum + (item.price || 0) * (item.quantity || 1);
-    }, 0);
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleCreateOrder = async () => {
     if (isSubmitting) return;
 
     // Validate form
@@ -245,6 +238,68 @@ const OrderNew = () => {
     }
   };
 
+  const saveConfirmation = useConfirmation({
+    title: "Create New Order",
+    description: "Are you sure you want to create this order?",
+    confirmText: "Create Order",
+    onConfirm: handleCreateOrder,
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    saveConfirmation.open();
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const inputVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3 },
+    },
+    focus: {
+      scale: 1.02,
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+      transition: { duration: 0.2 },
+    },
+    blur: {
+      scale: 1,
+      boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)",
+      transition: { duration: 0.2 },
+    },
+    hover: {
+      y: -2,
+      transition: { duration: 0.2 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+    hover: {
+      y: -4,
+      boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+      transition: { duration: 0.2 },
+    },
+  };
+
   if (isLoadingCustomers || isLoadingProducts || isLoadingEmployees) {
     return (
       <Layout title="Create Order" description="Create a new customer order">
@@ -258,177 +313,202 @@ const OrderNew = () => {
 
   return (
     <Layout title="Create Order" description="Create a new customer order">
-      <form onSubmit={handleSubmit} className="space-y-8">
-        <div className="grid grid-cols-1 gap-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">Customer</label>
-              <Select onValueChange={setCustomerId} value={customerId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a customer" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map((customer) => (
-                    <SelectItem key={customer.id} value={customer.id}>
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+      <motion.div
+        className="max-w-4xl mx-auto px-4 sm:px-16"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-white via-white to-blue-50/30 backdrop-blur-xl ring-1 ring-gray-200/50 overflow-hidden p-6 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 animate-pulse">
+                <ShoppingCart className="h-6 w-6 text-white" />
+              </div>
+              <span className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                New Order
+              </span>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Processed By
-              </label>
-              <Select onValueChange={setEmployeeId} value={employeeId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select an employee" />
-                </SelectTrigger>
-                <SelectContent>
-                  {employees.map((employee) => (
-                    <SelectItem key={employee.id} value={employee.id}>
-                      {employee.name} - {employee.department}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <motion.div className="space-y-3" variants={inputVariants}>
+                <label className="block text-sm font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Customer
+                    </span>
+                  </div>
+                </label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                  className="transform-gpu"
+                >
+                  <Combobox
+                    items={customerOptions || []}
+                    value={customerId}
+                    onValueChange={setCustomerId}
+                    placeholder="Search customer..."
+                    searchPlaceholder="Type customer name..."
+                    emptyText="No customers found"
+                    isLoading={isLoadingCustomers}
+                  />
+                </motion.div>
+              </motion.div>
 
-          <div>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium">Order Items</h3>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={addItem}
-              >
-                <Plus size={16} className="mr-1" /> Add Item
-              </Button>
+              <motion.div className="space-y-3" variants={inputVariants}>
+                <label className="block text-sm font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <UserCircle className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Processed By
+                    </span>
+                  </div>
+                </label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                  className="transform-gpu"
+                >
+                  <Select onValueChange={setEmployeeId} value={employeeId}>
+                    <SelectTrigger className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm">
+                      <SelectValue placeholder="Select an employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesEmployees.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              </motion.div>
             </div>
 
             <div className="space-y-4">
-              {items.map((item, index) => (
-                <Card key={item.id}>
-                  <CardContent className="pt-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start">
-                      <div className="sm:col-span-6">
-                        <label className="block text-sm font-medium mb-1">
-                          Product
-                        </label>
-                        <Select
-                          onValueChange={(value) =>
-                            updateItemPrice(item.id, value)
-                          }
-                          value={item.productId}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a product" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableProducts.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name} - ${product.price.toFixed(2)}{" "}
-                                (Stock: {product.stock})
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="sm:col-span-3">
-                        <label className="block text-sm font-medium mb-1">
-                          Quantity
-                        </label>
-                        <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateItemQuantity(
-                              item.id,
-                              parseInt(e.target.value)
-                            )
-                          }
-                          className="w-full"
-                        />
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium mb-1">
-                          Price
-                        </label>
-                        <div className="text-sm py-2">
-                          ${(item.price * item.quantity).toFixed(2)}
-                        </div>
-                      </div>
-
-                      <div className="sm:col-span-1 flex items-end justify-end h-full">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeItem(item.id)}
-                        >
-                          <Trash size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-lg font-medium mb-2">Order Summary</h3>
-            <Card>
-              <CardContent className="pt-4">
-                <div className="space-y-1">
-                  {items.map((item) => {
-                    const product = products.find(
-                      (p) => p.id === item.productId
-                    );
-                    const itemTotal = (product?.price || 0) * item.quantity;
-
-                    if (!product) return null;
-
-                    return (
-                      <div key={item.id} className="flex justify-between">
-                        <span>
-                          {product.name} x {item.quantity}
-                        </span>
-                        <span>${itemTotal.toFixed(2)}</span>
-                      </div>
-                    );
-                  })}
-
-                  <div className="border-t mt-2 pt-2 font-medium flex justify-between">
-                    <span>Total</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                    <Calculator className="h-4 w-4 text-blue-600" />
                   </div>
+                  <span className="text-sm font-semibold text-gray-700">
+                    Order Items
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                <Button
+                  type="button"
+                  onClick={addItem}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Item
+                </Button>
+              </div>
 
-        <div className="flex justify-end gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/orders")}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Creating..." : "Create Order"}
-          </Button>
-        </div>
-      </form>
+              <div className="space-y-4">
+                {items.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    className="grid grid-cols-1 items-center md:grid-cols-[2fr,1fr,auto] gap-4 p-4 rounded-lg bg-white/80 backdrop-blur-sm shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <motion.div
+                      variants={inputVariants}
+                      whileFocus="focus"
+                      whileTap="blur"
+                      className="transform-gpu"
+                    >
+                      <Select
+                        value={item.productId}
+                        onValueChange={(value) =>
+                          updateItem(item.id, "productId", value)
+                        }
+                      >
+                        <SelectTrigger className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm">
+                          <SelectValue placeholder="Select a product" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name} - ${product.price}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </motion.div>
+
+                    <motion.div
+                      variants={inputVariants}
+                      whileFocus="focus"
+                      whileTap="blur"
+                      className="transform-gpu"
+                    >
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateItem(
+                            item.id,
+                            "quantity",
+                            parseInt(e.target.value) || 1
+                          )
+                        }
+                        className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                      />
+                    </motion.div>
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeItem(item.id)}
+                      className="h-8 w-8 hover:bg-red-600 transition-colors duration-200"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <motion.div
+                  className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 shadow-sm hover:shadow-md transition-all duration-200"
+                  whileHover={{ scale: 1.02 }}
+                >
+                  <div className="text-sm font-medium text-gray-600">
+                    Total Amount
+                  </div>
+                  <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                    ${calculateTotal().toFixed(2)}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-6 border-t border-gray-100">
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 min-w-[150px]"
+              >
+                {isSubmitting ? "Creating..." : "Create Order"}
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </motion.div>
+      <ConfirmationDialog {...saveConfirmation.dialogProps} />
     </Layout>
   );
 };

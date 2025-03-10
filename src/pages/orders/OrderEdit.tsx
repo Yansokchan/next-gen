@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -14,7 +14,16 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Order } from "@/lib/types";
-import { ArrowLeft, Plus, Trash } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash,
+  ShoppingCart,
+  User,
+  UserCircle,
+  Package,
+  DollarSign,
+} from "lucide-react";
 import {
   fetchOrderById,
   fetchCustomers,
@@ -24,6 +33,10 @@ import {
 } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { motion } from "framer-motion";
+import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
 
 const OrderEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -60,7 +73,7 @@ const OrderEdit = () => {
   });
 
   // Fetch customers, products, and employees
-  const { data: customers = [] } = useQuery({
+  const { data: customers = [], isLoading: isLoadingCustomers } = useQuery({
     queryKey: ["customers"],
     queryFn: fetchCustomers,
   });
@@ -161,10 +174,66 @@ const OrderEdit = () => {
     }, 0);
   };
 
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowUpdateDialog(true);
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+        staggerChildren: 0.1,
+      },
+    },
   };
+
+  const inputVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: { duration: 0.3 },
+    },
+    focus: {
+      scale: 1.02,
+      boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
+      transition: { duration: 0.2 },
+    },
+    blur: {
+      scale: 1,
+      boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)",
+      transition: { duration: 0.2 },
+    },
+    hover: {
+      y: -2,
+      transition: { duration: 0.2 },
+    },
+  };
+
+  const fieldVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3 },
+    },
+    hover: {
+      y: -4,
+      boxShadow: "0 8px 30px rgba(0, 0, 0, 0.12)",
+      transition: { duration: 0.2 },
+    },
+  };
+
+  // Filter employees to only show Sales department
+  const salesEmployees = employees.filter(
+    (employee) => employee.department === "Sales"
+  );
+
+  // Format customers for combobox
+  const customerOptions = customers.map((customer) => ({
+    value: customer.id,
+    label: customer.name,
+  }));
 
   const confirmUpdate = async () => {
     if (!id || isSubmitting) return;
@@ -270,6 +339,19 @@ const OrderEdit = () => {
     }
   };
 
+  const updateConfirmation = useConfirmation({
+    title: "Update Order",
+    description: "Are you sure you want to update this order?",
+    confirmText: "Update Order",
+    onConfirm: confirmUpdate,
+    variant: "default",
+  });
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateConfirmation.open();
+  };
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -280,11 +362,20 @@ const OrderEdit = () => {
 
   if (isLoadingOrder) {
     return (
-      <Layout>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-[200px] w-full" />
-        </div>
+      <Layout title="Loading..." description="Fetching order information...">
+        <motion.div
+          className="max-w-4xl mx-auto px-4 sm:px-16"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
+          <Card className="shadow-xl border-0 bg-gradient-to-br from-white via-white to-blue-50/30 backdrop-blur-xl ring-1 ring-gray-200/50 overflow-hidden p-6 sm:p-8">
+            <div className="animate-pulse space-y-4">
+              <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+              <div className="h-20 bg-gray-200 rounded"></div>
+            </div>
+          </Card>
+        </motion.div>
       </Layout>
     );
   }
@@ -301,235 +392,223 @@ const OrderEdit = () => {
   }
 
   return (
-    <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            className="flex items-center gap-2"
-            onClick={() => navigate("/orders")}
-          >
-            <ArrowLeft size={16} />
-            Back to Orders
-          </Button>
-          <h1 className="text-2xl font-bold">
-            Edit Order #{order.id.substring(0, 8).toUpperCase()}
-          </h1>
-        </div>
-
-        <form onSubmit={handleUpdate} className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Customer
-                  </label>
-                  <Select value={customerId} onValueChange={setCustomerId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a customer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {customers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Processed By
-                  </label>
-                  <Select value={employeeId} onValueChange={setEmployeeId}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an employee" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {employees.map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                          {employee.name} - {employee.department}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+    <Layout title="Edit Order" description="Update order information.">
+      <motion.div
+        className="max-w-4xl mx-auto px-4 sm:px-16"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+      >
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-white via-white to-blue-50/30 backdrop-blur-xl ring-1 ring-gray-200/50 overflow-hidden p-6 sm:p-8">
+          <form onSubmit={handleUpdate} className="space-y-8">
+            <motion.div
+              className="flex items-center gap-3 mb-6"
+              variants={fieldVariants}
+            >
+              <div className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 animate-pulse">
+                <ShoppingCart className="h-6 w-6 text-white" />
               </div>
-            </CardContent>
-          </Card>
+              <span className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                Edit Order
+              </span>
+            </motion.div>
 
-          <Card>
-            <CardHeader>
+            <motion.div
+              className="grid grid-cols-1 md:grid-cols-2 gap-8"
+              variants={containerVariants}
+            >
+              <motion.div className="space-y-3" variants={inputVariants}>
+                <Label htmlFor="customer" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Customer
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                  className="transform-gpu"
+                >
+                  <Combobox
+                    items={customerOptions || []}
+                    value={customerId}
+                    onValueChange={(value) => {
+                      setCustomerId(value);
+                      setHasChanges(true);
+                    }}
+                    placeholder="Search customer..."
+                    searchPlaceholder="Type customer name..."
+                    emptyText="No customers found"
+                    isLoading={isLoadingCustomers}
+                  />
+                </motion.div>
+              </motion.div>
+
+              <motion.div className="space-y-3" variants={inputVariants}>
+                <Label htmlFor="employee" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <UserCircle className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Employee
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                  className="transform-gpu"
+                >
+                  <Select
+                    value={employeeId}
+                    onValueChange={(value) => {
+                      setEmployeeId(value);
+                      setHasChanges(true);
+                    }}
+                  >
+                    <SelectTrigger className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm">
+                      <SelectValue placeholder="Select employee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {salesEmployees.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+
+            <motion.div className="space-y-4" variants={containerVariants}>
               <div className="flex items-center justify-between">
-                <CardTitle>Order Items</CardTitle>
+                <Label className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <Package className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Order Items
+                    </span>
+                  </div>
+                </Label>
                 <Button
                   type="button"
-                  variant="outline"
-                  size="sm"
                   onClick={addItem}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200"
                 >
-                  <Plus size={16} className="mr-1" /> Add Item
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
                 </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-12 gap-4 py-2 font-medium text-sm">
-                  <div className="col-span-6">Product</div>
-                  <div className="col-span-2">Quantity</div>
-                  <div className="col-span-3 text-right">Total</div>
-                  <div className="col-span-1"></div>
-                </div>
 
-                {items.map((item) => {
-                  const selectedProduct = products.find(
-                    (p) => p.id === item.productId
-                  );
-                  const maxQuantity = selectedProduct?.stock || 0;
-                  const isOriginalItem = order?.items.some(
-                    (i) => i.id === item.id
-                  );
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="grid grid-cols-12 gap-4 items-center border-b pb-4 last:border-0 last:pb-0"
+              {items.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  className="grid grid-cols-12 gap-4 items-center bg-white/50 backdrop-blur-sm p-4 rounded-lg border border-gray-200 shadow-sm"
+                  variants={fieldVariants}
+                >
+                  <div className="col-span-5">
+                    <Select
+                      value={item.productId}
+                      onValueChange={(value) => updateItemPrice(item.id, value)}
                     >
-                      <div className="col-span-6">
-                        <Select
-                          value={item.productId}
-                          onValueChange={(value) =>
-                            updateItemPrice(item.id, value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a product">
-                              {selectedProduct && selectedProduct.name}
-                            </SelectValue>
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products
-                              .filter(
-                                (product) =>
-                                  product.status === "available" &&
-                                  (product.stock > 0 ||
-                                    product.id === item.productId)
-                              )
-                              .map((product) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {product.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                        {selectedProduct && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Price: ${selectedProduct.price.toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="col-span-2">
-                        <Input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const quantity = parseInt(e.target.value);
-                            if (!isNaN(quantity) && quantity >= 1) {
-                              updateItemQuantity(item.id, quantity);
-                            }
-                          }}
-                          min={1}
-                          max={maxQuantity}
-                          className="text-right"
-                        />
-                        {selectedProduct && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Stock: {selectedProduct.stock}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="col-span-3 text-right font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
-
-                      <div className="col-span-1 flex justify-end">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(item.id)}
-                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10 transition-colors"
-                          disabled={items.length === 1}
-                        >
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <div className="pt-4 border-t">
-                  <div className="flex justify-end gap-4 text-sm">
-                    <span className="font-medium">Subtotal:</span>
-                    <span className="font-medium">
-                      ${calculateTotal().toFixed(2)}
-                    </span>
+                      <SelectTrigger className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm">
+                        <SelectValue placeholder="Select product" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} - ${product.price}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="flex justify-end gap-4 text-sm mt-2">
-                    <span className="font-medium">Total:</span>
-                    <span className="font-medium">
-                      ${calculateTotal().toFixed(2)}
-                    </span>
+                  <div className="col-span-2">
+                    <Input
+                      type="number"
+                      min="1"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        updateItemQuantity(item.id, parseInt(e.target.value))
+                      }
+                      className="h-12 focus-ring border-gray-200 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                    />
                   </div>
+                  <div className="col-span-3 text-right font-medium">
+                    ${(item.price * item.quantity).toFixed(2)}
+                  </div>
+                  <div className="col-span-2 text-right">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleDelete(item.id)}
+                      className="h-12 hover:bg-red-50 hover:text-red-600 hover:border-red-200"
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+
+              <motion.div
+                className="flex items-center justify-between p-4 bg-gradient-to-br from-blue-50 to-indigo-50/30 rounded-lg"
+                variants={fieldVariants}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg">
+                    <DollarSign className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <span className="font-semibold text-gray-700">Total</span>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <span className="text-xl font-bold text-gray-900">
+                  ${calculateTotal().toFixed(2)}
+                </span>
+              </motion.div>
+            </motion.div>
 
-          <div className="flex justify-end gap-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(`/orders/${id}`)}
+            <motion.div
+              className="flex justify-end gap-4 pt-6 border-t border-gray-100"
+              variants={fieldVariants}
             >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Updating..." : "Update Order"}
-            </Button>
-          </div>
-        </form>
-
-        {/* Confirmation Dialogs */}
-        <ConfirmationDialog
-          isOpen={showUpdateDialog}
-          onClose={() => setShowUpdateDialog(false)}
-          onConfirm={confirmUpdate}
-          title="Update Order"
-          description="Are you sure you want to update this order?"
-          confirmText="Update"
-        />
-
-        <ConfirmationDialog
-          isOpen={showDeleteDialog}
-          onClose={() => {
-            setShowDeleteDialog(false);
-            setItemToDelete(null);
-          }}
-          onConfirm={confirmDelete}
-          title="Remove Item"
-          description="Are you sure you want to remove this item from the order?"
-          confirmText="Remove"
-          variant="destructive"
-        />
-      </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/orders")}
+                className="min-w-[100px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 min-w-[150px]"
+              >
+                {isSubmitting ? "Updating..." : "Update Order"}
+              </Button>
+            </motion.div>
+          </form>
+        </Card>
+      </motion.div>
+      <ConfirmationDialog {...updateConfirmation.dialogProps} />
+      <ConfirmationDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={confirmDelete}
+        title="Delete Item"
+        description="Are you sure you want to remove this item from the order?"
+        confirmText="Delete Item"
+        variant="destructive"
+      />
     </Layout>
   );
 };

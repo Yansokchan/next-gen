@@ -16,6 +16,7 @@ import {
   Mail,
   Building2,
   FileText,
+  Phone,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -340,6 +341,19 @@ const OrderView = () => {
                       </dt>
                       <dd className="text-base font-medium text-gray-900">
                         {customer.email}
+                      </dd>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="p-2 bg-blue-50 rounded-lg">
+                      <Phone className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">
+                        Phone
+                      </dt>
+                      <dd className="text-base font-medium text-gray-900">
+                        {customer.phone}
                       </dd>
                     </div>
                   </div>

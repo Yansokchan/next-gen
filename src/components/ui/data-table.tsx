@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/pagination";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Search, Edit, Trash, Eye } from "lucide-react";
+import { MoreHorizontal, Search, Edit, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -129,13 +129,13 @@ export function DataTable<T extends { id: string }>({
           <TableHeader>
             <TableRow>
               {columns.map((column, index) => (
-                <TableHead key={index} className="bg-secondary/40 font-medium">
-                  {typeof column.header === 'function' 
+                <TableHead key={index} className="bg-gray-500/10 font-medium">
+                  {typeof column.header === "function"
                     ? column.header()
                     : column.header}
                 </TableHead>
               ))}
-              <TableHead className="bg-secondary/40 w-[80px]">
+              <TableHead className="bg-gray-500/10 w-[80px] font-medium">
                 Actions
               </TableHead>
             </TableRow>
@@ -157,11 +157,19 @@ export function DataTable<T extends { id: string }>({
                   className="hover:bg-secondary/30 transition-colors group"
                 >
                   {columns.map((column, index) => (
-                    <TableCell key={index} className={cn(
-                      typeof column.accessorKey === "function" ? "" : 
-                      typeof column.cell === "function" ? "" :
-                      column.accessorKey === "price" || column.accessorKey === "total" ? "text-center" : ""
-                    )}>
+                    <TableCell
+                      key={index}
+                      className={cn(
+                        typeof column.accessorKey === "function"
+                          ? ""
+                          : typeof column.cell === "function"
+                          ? ""
+                          : column.accessorKey === "price" ||
+                            column.accessorKey === "total"
+                          ? "text-center"
+                          : ""
+                      )}
+                    >
                       {typeof column.accessorKey === "function"
                         ? column.accessorKey(row)
                         : column.cell
@@ -192,13 +200,6 @@ export function DataTable<T extends { id: string }>({
                         >
                           <Edit size={16} className="mr-2" />
                           Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => handleDelete(getRowId(row))}
-                          className="text-destructive focus:text-destructive hover:!text-destructive hover:!bg-destructive/10 font-medium"
-                        >
-                          <Trash size={16} className="mr-2 text-destructive" />
-                          Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

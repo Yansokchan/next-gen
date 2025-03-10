@@ -9,6 +9,12 @@ import { Customer } from "@/lib/types";
 import { customers } from "@/lib/data";
 import { createCustomer } from "@/lib/supabase";
 import { v4 as uuidv4 } from "uuid";
+import { Card } from "@/components/ui/card";
+import { User, Mail, Phone, MapPin, UserPlus, ArrowLeft } from "lucide-react";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
+import { useConfirmation } from "@/hooks/useConfirmation";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 const CustomerNew = () => {
   const navigate = useNavigate();
@@ -26,9 +32,7 @@ const CustomerNew = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const saveCustomer = async () => {
     try {
       // Try to create customer via Supabase
       const newCustomer = await createCustomer(
@@ -71,69 +75,188 @@ const CustomerNew = () => {
     }
   };
 
+  const saveConfirmation = useConfirmation({
+    title: "Create New Customer",
+    description: "Are you sure you want to create this customer?",
+    confirmText: "Create Customer",
+    onConfirm: saveCustomer,
+    variant: "default",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    saveConfirmation.open();
+  };
+
+  const handleCancel = () => {
+    navigate("/customers");
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const inputVariants = {
+    focus: { scale: 1.02, transition: { duration: 0.2 } },
+    blur: { scale: 1, transition: { duration: 0.2 } },
+  };
+
   return (
     <Layout title="New Customer" description="Create a new customer record.">
-      <FormLayout
-        title="Customer Information"
-        description="Add a new customer to your database."
-        onSubmit={handleSubmit}
-        backPath="/customers"
+      <motion.div
+        className="max-w-4xl mx-auto px-4 sm:px-16"
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              name="name"
-              placeholder="John Smith"
-              value={formData.name}
-              onChange={handleChange}
-              required
-              className="focus-ring"
-            />
-          </div>
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50/50 backdrop-blur-xl ring-1 ring-gray-200/50 overflow-hidden">
+          <FormLayout
+            title={
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg shadow-blue-500/20 animate-pulse">
+                  <UserPlus className="h-6 w-6 text-white" />
+                </div>
+                <span className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
+                  New Customer
+                </span>
+              </div>
+            }
+            description="Add a new customer to your database."
+            onSubmit={handleSubmit}
+            onCancel={() => navigate("/customers")}
+            className="p-6 sm:p-8"
+            submitText="Create Customer"
+            cancelText="Cancel"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <motion.div className="space-y-3" whileTap={{ scale: 0.995 }}>
+                <Label htmlFor="name" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Full Name
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                >
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="John Smith"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    className="focus-ring border-gray-200 h-12 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                  />
+                </motion.div>
+              </motion.div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="john@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              className="focus-ring"
-            />
-          </div>
+              <motion.div className="space-y-3" whileTap={{ scale: 0.995 }}>
+                <Label htmlFor="email" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <Mail className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Email Address
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                >
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    className="focus-ring border-gray-200 h-12 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                  />
+                </motion.div>
+              </motion.div>
 
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              name="phone"
-              placeholder="+1 (555) 123-4567"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="focus-ring"
-            />
-          </div>
+              <motion.div className="space-y-3" whileTap={{ scale: 0.995 }}>
+                <Label htmlFor="phone" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <Phone className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Phone Number
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                >
+                  <Input
+                    id="phone"
+                    name="phone"
+                    placeholder="+1 (555) 123-4567"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    className="focus-ring border-gray-200 h-12 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                  />
+                </motion.div>
+              </motion.div>
 
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="address">Address</Label>
-            <Input
-              id="address"
-              name="address"
-              placeholder="123 Main St, City, Country"
-              value={formData.address}
-              onChange={handleChange}
-              required
-              className="focus-ring"
-            />
-          </div>
-        </div>
-      </FormLayout>
+              <motion.div
+                className="space-y-3 md:col-span-2"
+                whileTap={{ scale: 0.995 }}
+              >
+                <Label htmlFor="address" className="text-gray-700 font-medium">
+                  <div className="flex items-center gap-2.5 mb-2">
+                    <div className="p-2 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-sm">
+                      <MapPin className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-sm font-semibold text-gray-700">
+                      Address
+                    </span>
+                  </div>
+                </Label>
+                <motion.div
+                  variants={inputVariants}
+                  whileFocus="focus"
+                  whileTap="blur"
+                >
+                  <Input
+                    id="address"
+                    name="address"
+                    placeholder="123 Main St, City, Country"
+                    value={formData.address}
+                    onChange={handleChange}
+                    required
+                    className="focus-ring border-gray-200 h-12 shadow-sm transition-all duration-200 hover:shadow-md bg-white/50 backdrop-blur-sm"
+                  />
+                </motion.div>
+              </motion.div>
+            </div>
+          </FormLayout>
+        </Card>
+      </motion.div>
+      <ConfirmationDialog {...saveConfirmation.dialogProps} />
     </Layout>
   );
 };
